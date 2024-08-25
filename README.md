@@ -1,7 +1,7 @@
-これはArduino（UNO R3）でデータを取得(シリアルで垂れ流し)するするものです。
+これはArduino（UNO R4）でデータを取得(シリアルで垂れ流し)するするものです。
 10秒ごとのデータを収集します。
 
-I2CにAdafruit INA219を使用します。
+I2CにAdafruit INA219を使用します。(ライブラリが必要です)
 https://akizukidenshi.com/catalog/g/g108221/
 
 
