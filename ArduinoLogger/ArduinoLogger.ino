@@ -1,4 +1,7 @@
 #define TimeSpan 10000
+#define ADRes 10
+#define ADVOLT 5
+#define ADMAX 1023; //for 10bit
 bool enableA0=false;
 bool enableA1=false;
 bool enableA2=false;
@@ -7,21 +10,25 @@ bool enableA4=false;
 bool enableA5=false;
 bool enableD2=false;
 bool enableD3=false;
-
+bool enableCurrent=false;
+float DATAtoV(int data){
+  return (float)(ADVOLT*data)/ADMAX;
+}
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(115200);
+  analogReadResolution(ADRes);
   pinMode(2,INPUT);
   pinMode(3,INPUT);
-  pinMode(4,INPUT_PULLUP);
-  pinMode(5,INPUT_PULLUP); //SELECT D2
-  pinMode(6,INPUT_PULLUP); //SELECT D3
-  pinMode(7,INPUT_PULLUP); //SELECT A5
-  pinMode(8,INPUT_PULLUP); //SELECT A4
-  pinMode(9,INPUT_PULLUP); //SELECT A3
-  pinMode(10,INPUT_PULLUP); //SELECT A2
-  pinMode(11,INPUT_PULLUP); //SELECT A1
-  pinMode(12,INPUT_PULLUP); //SELECT A0
+  pinMode(4,INPUT_PULLUP); //SELECT D2
+  pinMode(5,INPUT_PULLUP); //SELECT D3
+  pinMode(6,INPUT_PULLUP); //SELECT A5
+  pinMode(7,INPUT_PULLUP); //SELECT A4
+  pinMode(8,INPUT_PULLUP); //SELECT A3
+  pinMode(9,INPUT_PULLUP); //SELECT A2
+  pinMode(10,INPUT_PULLUP); //SELECT A1
+  pinMode(11,INPUT_PULLUP); //SELECT A0
+  pinMode(12,INPUT_PULLUP); //SELECT Current
   pinMode(13,OUTPUT);//L
   if(digitalRead(12))enableA0=true;
   if(digitalRead(11))enableA1=true;
@@ -32,7 +39,7 @@ void setup() {
   if(digitalRead(6))enableD3=true;
   if(digitalRead(5))enableD2=true;
 
-  Serial.print("mills,");
+  Serial.print("mills,count,");
   if(enableA0)Serial.print("A0_Low,A0_High,");
   if(enableA1)Serial.print("A1_Low,A1_High,");
   if(enableA2)Serial.print("A2_Low,A2_High,");
@@ -41,22 +48,26 @@ void setup() {
   if(enableA5)Serial.print("A5_Low,A5_High,");
   if(enableD2)Serial.print("D2_Low,D2_High,");
   if(enableD3)Serial.print("D3_Low,D3_High");
-  Serial.printLn("");
+  Serial.println("");
 }
 
 void loop() {
-  static int A0_High=0,A0_LOW=32000;
-  static int A1_High=0,A1_LOW=32000;
-  static int A2_High=0,A2_LOW=32000;
-  static int A3_High=0,A3_LOW=32000;
-  static int A4_High=0,A4_LOW=32000;
-  static int A5_High=0,A5_LOW=32000;
-  static bool D2_High=false,D2_LOW=false;
-  static bool D3_High=false,D3_LOW=false;
-  unsigned long m=mills()+TimeSpan;
-  if(mills>m){
+  static uint16_t count=0; 
+  static int A0_High=0,A0_Low=ADMAX;
+  static int A1_High=0,A1_Low=ADMAX;
+  static int A2_High=0,A2_Low=ADMAX;
+  static int A3_High=0,A3_Low=ADMAX;
+  static int A4_High=0,A4_Low=ADMAX;
+  static int A5_High=0,A5_Low=ADMAX;
+  static bool D2_High=false,D2_Low=false;
+  static bool D3_High=false,D3_Low=false;
+  unsigned long m=millis()+TimeSpan;
+  if(millis()>m){
     Serial.print(m);
     m=m+TimeSpan;
+    Serial.print(",");
+    Serial.print(count);
+    count=0;
     Serial.print(",");
     if(enableA0){
       Serial.print(A0_Low);
@@ -130,7 +141,7 @@ void loop() {
       D3_High=false;
       D3_Low=false;
     }
-    Serial.printLn("");
+    Serial.println("");
   }
 // Data Read
   if(enableA0){
@@ -164,11 +175,12 @@ void loop() {
     if(val<A5_Low)A0_Low=val;
   }
   if(enableD2){
-    if(digitalRead(D2))D2_High=true;
+    if(digitalRead(2))D2_High=true;
     else D2_Low=true;
   }
   if(enableD3){
-    if(digitalRead(D3))D3_High=true;
+    if(digitalRead(3))D3_High=true;
     else D3_Low=true;
-  }  
+  }
+  count++;
 }
