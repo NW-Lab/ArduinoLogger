@@ -1,7 +1,19 @@
+/**
+ USE 
+ - Arduino UNO R4 minima
+ - adafruit INA219
+**/
+
+#include <Wire.h>
+#include <Adafruit_INA219.h>
+
 #define TimeSpan 10000
 #define ADRes 10
 #define ADVOLT 5
 #define ADMAX 1023; //for 10bit
+
+Adafruit_INA219 ina219;
+
 bool enableA0=false;
 bool enableA1=false;
 bool enableA2=false;
@@ -39,7 +51,13 @@ void setup() {
   if(digitalRead(6))enableD3=true;
   if(digitalRead(5))enableD2=true;
 
+ if (! ina219.begin()) {
+    Serial.println("Failed to find INA219 chip");
+    while (1) { delay(10); }
+  }
+
   Serial.print("mills,count,");
+  if(enableCurrent)Serial.print("I_Low,I_High,");
   if(enableA0)Serial.print("A0_Low,A0_High,");
   if(enableA1)Serial.print("A1_Low,A1_High,");
   if(enableA2)Serial.print("A2_Low,A2_High,");
@@ -53,6 +71,7 @@ void setup() {
 
 void loop() {
   static uint16_t count=0; 
+  static float I_High=0,I_Low=999; 
   static int A0_High=0,A0_Low=ADMAX;
   static int A1_High=0,A1_Low=ADMAX;
   static int A2_High=0,A2_Low=ADMAX;
@@ -69,20 +88,20 @@ void loop() {
     Serial.print(count);
     count=0;
     Serial.print(",");
-    if(enableA0){
-      Serial.print(A0_Low);
+    if(enableCurrent){
+      Serial.print(I_Low);
       Serial.print(",");
-      Serial.print(A0_High);
+      Serial.print(I_High);
       Serial.print(",");
-      A0_Low=32000;
-      A0_High=0;
+      I_Low=999;
+      I_High=0;
     }
     if(enableA0){
       Serial.print(A0_Low);
       Serial.print(",");
       Serial.print(A0_High);
       Serial.print(",");
-      A0_Low=32000;
+      A0_Low=ADMAX;
       A0_High=0;
     }
     if(enableA1){
@@ -90,7 +109,7 @@ void loop() {
       Serial.print(",");
       Serial.print(A1_High);
       Serial.print(",");
-      A1_Low=32000;
+      A1_Low=ADMAX;
       A1_High=0;
     }
     if(enableA2){
@@ -98,7 +117,7 @@ void loop() {
       Serial.print(",");
       Serial.print(A2_High);
       Serial.print(",");
-      A2_Low=32000;
+      A2_Low=ADMAX;
       A2_High=0;
     }
     if(enableA3){
@@ -106,7 +125,7 @@ void loop() {
       Serial.print(",");
       Serial.print(A3_High);
       Serial.print(",");
-      A3_Low=32000;
+      A3_Low=ADMAX;
       A3_High=0;
     }
     if(enableA4){
@@ -114,7 +133,7 @@ void loop() {
       Serial.print(",");
       Serial.print(A4_High);
       Serial.print(",");
-      A4_Low=32000;
+      A4_Low=ADMAX;
       A4_High=0;
     }
     if(enableA5){
@@ -122,7 +141,7 @@ void loop() {
       Serial.print(",");
       Serial.print(A5_High);
       Serial.print(",");
-      A5_Low=32000;
+      A5_Low=ADMAX;
       A5_High=0;
     }
     if(enableD2){
@@ -144,6 +163,11 @@ void loop() {
     Serial.println("");
   }
 // Data Read
+  if(enableCurrent){
+    float val=ina219.getCurrent_mA();
+    if(val>I_High)I_High=val;
+    if(val<I_Low)I_Low=val;
+  }
   if(enableA0){
     int val=analogRead(A0);
     if(val>A0_High)A0_High=val;
